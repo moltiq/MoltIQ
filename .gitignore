@@ -1,0 +1,27 @@
+# Dependencies and build
+node_modules
+dist
+build
+*.tsbuildinfo
+
+# Environment and secrets (never commit)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Database and Chroma
+*.db
+*.db-journal
+.prisma
+chroma_data
+
+# Test and tooling
+coverage
+*.log
+.DS_Store
+Thumbs.db
+.cache
+
+# Optional: uncomment if you use local settings for dev only
+# .moltiq/

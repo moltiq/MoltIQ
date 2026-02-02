@@ -1,0 +1,22 @@
+{
+  "name": "moltiq-mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": { "moltiq-mcp": "dist/run.js" },
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/run.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "moltiq-core": "workspace:*",
+    "moltiq-db": "workspace:*",
+    "moltiq-vector": "workspace:*",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

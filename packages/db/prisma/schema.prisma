@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  sessions  Session[]
+  memories  Memory[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  startedAt DateTime
+  endedAt   DateTime?
+  events    Event[]
+  memories  Memory[]
+}
+
+model Event {
+  id         String   @id @default(cuid())
+  sessionId  String
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  type       String
+  payloadJson String
+  createdAt  DateTime @default(now())
+}
+
+enum MemoryType {
+  FACT
+  DECISION
+  SNIPPET
+  TASK
+  SUMMARY
+}
+
+model Memory {
+  id          String     @id @default(cuid())
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sessionId   String?
+  session     Session?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  type        MemoryType
+  title       String
+  content     String
+  source      String?
+  tagsJson    String?
+  isFavorite  Boolean    @default(false)
+  isPinned    Boolean    @default(false)
+  confidence  Float?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  embeddings  MemoryEmbedding[]
+}
+
+model MemoryEmbedding {
+  id             String   @id @default(cuid())
+  memoryId       String
+  memory         Memory   @relation(fields: [memoryId], references: [id], onDelete: Cascade)
+  vectorProvider String
+  vectorId       String
+  createdAt      DateTime @default(now())
+}

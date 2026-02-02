@@ -1,0 +1,20 @@
+{
+  "name": "moltiq",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first long-term intelligence and memory layer for AI agents",
+  "scripts": {
+    "dev": "pnpm --filter moltiq-server run dev",
+    "build": "pnpm -r run build",
+    "db:migrate": "pnpm --filter moltiq-db exec prisma migrate dev",
+    "db:generate": "pnpm --filter moltiq-db exec prisma generate",
+    "db:push": "pnpm --filter moltiq-db exec prisma db push",
+    "test": "pnpm -r run test",
+    "test:core": "pnpm --filter moltiq-core run test",
+    "lint": "pnpm -r run lint"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
