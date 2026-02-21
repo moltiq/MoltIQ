@@ -20,7 +20,7 @@ COPY --from=deps /app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=deps /app/packages/vector/node_modules ./packages/vector/node_modules
 COPY . .
-RUN pnpm db:generate && pnpm run build
+RUN pnpm db:generate && pnpm --filter moltiq-db run build && pnpm --filter moltiq-vector run build && pnpm --filter moltiq-core run build && pnpm --filter moltiq-server run build
 
 # Production image
 FROM base AS runner

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -34,7 +34,7 @@ model Event {
   createdAt  DateTime @default(now())
 }
 
-// SQLite does not support enums; type is stored as TEXT. Use values: FACT, DECISION, SNIPPET, TASK, SUMMARY
+// type: FACT | DECISION | SNIPPET | TASK | SUMMARY
 model Memory {
   id          String     @id @default(cuid())
   projectId   String
