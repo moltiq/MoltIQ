@@ -48,7 +48,7 @@ async function main() {
     },
   });
 
-  app.setErrorHandler((err, req, reply) => {
+  app.setErrorHandler((err, _req, reply) => {
     if (err instanceof AppError) {
       return reply.status(err.statusCode).send(err.toJSON());
     }

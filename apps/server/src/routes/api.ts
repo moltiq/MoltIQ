@@ -19,9 +19,9 @@ export async function apiRoutes(
     config: { recencyHalfLifeDays: number; useLLMExtraction?: boolean; useLLMSessionSummary?: boolean };
   }
 ) {
-  const { vector, memoryService, retrieval, config } = deps;
+  const { memoryService, retrieval, config } = deps;
 
-  app.get("/api/search", async (req, reply) => {
+  app.get("/api/search", async (req, _reply) => {
     const q = (req.query as { q?: string }).q ?? "";
     const project = (req.query as { project?: string }).project;
     const tags = (req.query as { tags?: string }).tags?.split(",").filter(Boolean) ?? [];
@@ -56,7 +56,7 @@ export async function apiRoutes(
     };
   });
 
-  app.get("/api/recall", async (req, reply) => {
+  app.get("/api/recall", async (req, _reply) => {
     const q = (req.query as { q?: string }).q ?? "";
     const project = (req.query as { project?: string }).project;
     const budgetTokens = Number((req.query as { budgetTokens?: string }).budgetTokens) || 2000;
@@ -86,7 +86,7 @@ export async function apiRoutes(
     };
   });
 
-  app.get("/api/timeline", async (req, reply) => {
+  app.get("/api/timeline", async (req, _reply) => {
     const project = (req.query as { project?: string }).project ?? "";
     const days = Number((req.query as { days?: string }).days) || 7;
     const limit = Math.min(Number((req.query as { limit?: string }).limit) || DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE);
@@ -111,7 +111,7 @@ export async function apiRoutes(
     return { memories, pagination: { limit, offset, total } };
   });
 
-  app.get("/api/stats", async (req, reply) => {
+  app.get("/api/stats", async (req, _reply) => {
     const project = (req.query as { project?: string }).project;
     if (!project) {
       const counts = await prisma.memory.groupBy({
@@ -139,7 +139,7 @@ export async function apiRoutes(
     return { projectId: p.id, projectName: p.name, count };
   });
 
-  app.get("/api/export", async (req, reply) => {
+  app.get("/api/export", async (req, _reply) => {
     const format = ((req.query as { format?: string }).format ?? "json") as "json" | "csv" | "md";
     const project = (req.query as { project?: string }).project;
     const limit = Math.min(Number((req.query as { limit?: string }).limit) || 1000, MAX_PAGE_SIZE * 10);
@@ -178,7 +178,7 @@ export async function apiRoutes(
     return { projects: projects.map((p) => ({ id: p.id, name: p.name, createdAt: p.createdAt, memoryCount: p._count.memories })) };
   });
 
-  app.post("/api/projects", async (req, reply) => {
+  app.post("/api/projects", async (req, _reply) => {
     const body = req.body as { name: string };
     if (!body.name?.trim()) throw badRequest("name is required");
     const existing = await prisma.project.findFirst({ where: { name: body.name.trim() } });
@@ -187,7 +187,7 @@ export async function apiRoutes(
     return { project };
   });
 
-  app.get("/api/projects/:id", async (req, reply) => {
+  app.get("/api/projects/:id", async (req, _reply) => {
     const id = (req.params as { id: string }).id;
     const project = await prisma.project.findFirst({
       where: { OR: [{ id }, { name: id }] },
@@ -197,7 +197,7 @@ export async function apiRoutes(
     return { project: { ...project, memoryCount: project._count.memories, sessionCount: project._count.sessions } };
   });
 
-  app.patch("/api/projects/:id", async (req, reply) => {
+  app.patch("/api/projects/:id", async (req, _reply) => {
     const id = (req.params as { id: string }).id;
     const body = req.body as { name?: string };
     const project = await prisma.project.findUnique({ where: { id } });
@@ -207,7 +207,7 @@ export async function apiRoutes(
     return { project: updated };
   });
 
-  app.delete("/api/projects/:id", async (req, reply) => {
+  app.delete("/api/projects/:id", async (req, _reply) => {
     const id = (req.params as { id: string }).id;
     const project = await prisma.project.findUnique({ where: { id } });
     if (!project) throw notFound("Project not found", { id });
@@ -215,7 +215,7 @@ export async function apiRoutes(
     return { deleted: id };
   });
 
-  app.post("/api/memory", async (req, reply) => {
+  app.post("/api/memory", async (req, _reply) => {
     const body = req.body as {
       projectId: string;
       sessionId?: string;
@@ -243,7 +243,7 @@ export async function apiRoutes(
     return { memory };
   });
 
-  app.patch("/api/memory/:id", async (req, reply) => {
+  app.patch("/api/memory/:id", async (req, _reply) => {
     const id = (req.params as { id: string }).id;
     const body = req.body as Partial<{
       type: string;
@@ -263,14 +263,14 @@ export async function apiRoutes(
     return { memory };
   });
 
-  app.delete("/api/memory/:id", async (req, reply) => {
+  app.delete("/api/memory/:id", async (req, _reply) => {
     const id = (req.params as { id: string }).id;
     const ok = await memoryService.delete(id);
     if (!ok) throw notFound("Memory not found", { id });
     return { deleted: id };
   });
 
-  app.post("/api/events", async (req, reply) => {
+  app.post("/api/events", async (req, _reply) => {
     const body = req.body as
       | {
           sessionId?: string;
