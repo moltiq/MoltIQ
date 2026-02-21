@@ -31,7 +31,6 @@ COPY --from=deps /app/apps/server/node_modules ./apps/server/node_modules
 COPY --from=deps /app/packages/core/node_modules ./packages/core/node_modules
 COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
 COPY --from=deps /app/packages/vector/node_modules ./packages/vector/node_modules
-COPY --from=builder /app/packages/db/node_modules/.prisma ./packages/db/node_modules/.prisma
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=builder /app/apps/server/dist ./apps/server/dist
 COPY --from=builder /app/packages/core/dist ./packages/core/dist
@@ -42,6 +41,9 @@ COPY apps/server/package.json ./apps/server/
 COPY packages/core/package.json ./packages/core/
 COPY packages/db/package.json ./packages/db/
 COPY packages/vector/package.json ./packages/vector/
+
+# Generate Prisma client in runner (pnpm puts it in store, not packages/db/node_modules)
+RUN pnpm --filter moltiq-db exec prisma generate
 
 # Default: SQLite in /data (mount a volume or use platform storage)
 ENV DATABASE_URL=file:/data/moltiq.db
