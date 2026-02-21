@@ -34,21 +34,14 @@ model Event {
   createdAt  DateTime @default(now())
 }
 
-enum MemoryType {
-  FACT
-  DECISION
-  SNIPPET
-  TASK
-  SUMMARY
-}
-
+// SQLite does not support enums; type is stored as TEXT. Use values: FACT, DECISION, SNIPPET, TASK, SUMMARY
 model Memory {
   id          String     @id @default(cuid())
   projectId   String
   project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   sessionId   String?
   session     Session?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
-  type        MemoryType
+  type        String     // FACT | DECISION | SNIPPET | TASK | SUMMARY
   title       String
   content     String
   source      String?
@@ -68,4 +61,15 @@ model MemoryEmbedding {
   vectorProvider String
   vectorId       String
   createdAt      DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String   // create | update | delete
+  resource   String   // memory | project | session
+  resourceId String
+  projectId  String?
+  actor      String?  // optional API key id or user id
+  details    String?  // JSON
+  createdAt  DateTime @default(now())
 }

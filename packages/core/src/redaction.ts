@@ -21,6 +21,16 @@ export function setRedactionDenylist(patterns: Array<{ pattern: RegExp; replacem
   customPatterns = patterns;
 }
 
+/** Load custom patterns from config (pattern and replacement strings; optional flags for RegExp). */
+export function loadCustomPatterns(
+  config: Array<{ pattern: string; replacement: string; flags?: string }>
+): void {
+  customPatterns = config.map(({ pattern, replacement, flags }) => ({
+    pattern: new RegExp(pattern, flags ?? "g"),
+    replacement,
+  }));
+}
+
 export function getRedactionPatterns(): Array<{ pattern: RegExp; replacement: Replacement }> {
   return [...DEFAULT_PATTERNS, ...customPatterns];
 }

@@ -2,6 +2,8 @@ import { prisma } from "moltiq-db";
 import {
   extractMemoryCandidates,
   extractSummaryFromStop,
+  extractMemoryCandidatesWithLLM,
+  generateSessionSummaryWithLLM,
   type MemoryCandidate,
 } from "moltiq-core";
 import type { MemoryService } from "./services/memory-service.js";
@@ -11,6 +13,11 @@ export interface IngestEventInput {
   sessionId: string;
   type: string;
   payloadJson: string;
+}
+
+export interface IngestOptions {
+  useLLMExtraction?: boolean;
+  useLLMSessionSummary?: boolean;
 }
 
 export async function ensureProject(name: string): Promise<string> {
@@ -23,9 +30,12 @@ export async function ensureProject(name: string): Promise<string> {
 
 export async function ingestEvent(
   input: IngestEventInput,
-  memoryService: MemoryService
+  memoryService: MemoryService,
+  options: IngestOptions = {}
 ): Promise<{ memoriesCreated: number }> {
-  const event = await prisma.event.create({
+  const { useLLMExtraction = false, useLLMSessionSummary = false } = options;
+
+  await prisma.event.create({
     data: {
       sessionId: input.sessionId,
       type: input.type,
@@ -43,13 +53,42 @@ export async function ingestEvent(
   let candidates: MemoryCandidate[] = [];
 
   if (input.type === "SessionStart") {
-    // Optional: extract from payload if it contains context
-    candidates = extractMemoryCandidates(input.payloadJson);
+    if (useLLMExtraction && process.env.OPENAI_API_KEY) {
+      try {
+        candidates = await extractMemoryCandidatesWithLLM(input.payloadJson);
+      } catch {
+        candidates = extractMemoryCandidates(input.payloadJson);
+      }
+    } else {
+      candidates = extractMemoryCandidates(input.payloadJson);
+    }
   } else if (input.type === "PostToolUse") {
-    candidates = extractMemoryCandidates(input.payloadJson);
+    if (useLLMExtraction && process.env.OPENAI_API_KEY) {
+      try {
+        candidates = await extractMemoryCandidatesWithLLM(input.payloadJson);
+      } catch {
+        candidates = extractMemoryCandidates(input.payloadJson);
+      }
+    } else {
+      candidates = extractMemoryCandidates(input.payloadJson);
+    }
   } else if (input.type === "Stop") {
-    const summary = extractSummaryFromStop(input.payloadJson);
-    if (summary) candidates = [summary];
+    if (useLLMSessionSummary && process.env.OPENAI_API_KEY) {
+      try {
+        const summary = await generateSessionSummaryWithLLM(input.payloadJson);
+        if (summary) candidates = [summary];
+        else {
+          const fallback = extractSummaryFromStop(input.payloadJson);
+          if (fallback) candidates = [fallback];
+        }
+      } catch {
+        const fallback = extractSummaryFromStop(input.payloadJson);
+        if (fallback) candidates = [fallback];
+      }
+    } else {
+      const summary = extractSummaryFromStop(input.payloadJson);
+      if (summary) candidates = [summary];
+    }
   }
 
   let created = 0;

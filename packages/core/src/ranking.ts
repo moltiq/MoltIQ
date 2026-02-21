@@ -20,11 +20,24 @@ export interface RankingOptions {
   query: string;
   projectId?: string;
   tags?: string[];
+  /** Recency decay: e^(-ageDays/decayDays). Default 30. */
   recencyBoostDays?: number;
   pinnedBoost?: number;
   favoriteBoost?: number;
   keywordWeight?: number;
   semanticWeight?: number;
+}
+
+export interface ScoreExplanation {
+  memoryId: string;
+  semantic: number;
+  keyword: number;
+  recency: number;
+  tagScore: number;
+  pinnedBoost: boolean;
+  favoriteBoost: boolean;
+  confidenceFactor: number;
+  finalScore: number;
 }
 
 const DEFAULT_RECENCY_DAYS = 30;
@@ -108,4 +121,69 @@ export function rankMemories(
     .filter((s) => s.score >= 0)
     .sort((a, b) => b.score - a.score)
     .map((s) => s.memory);
+}
+
+/** Like rankMemories but returns per-memory score breakdown when explain is needed. */
+export function rankMemoriesWithExplain(
+  memories: RankableMemory[],
+  options: RankingOptions
+): { ranked: RankableMemory[]; explanations: ScoreExplanation[] } {
+  const {
+    query,
+    projectId,
+    tags = [],
+    recencyBoostDays = DEFAULT_RECENCY_DAYS,
+    pinnedBoost = DEFAULT_PINNED_BOOST,
+    favoriteBoost = DEFAULT_FAVORITE_BOOST,
+    keywordWeight = DEFAULT_KEYWORD_WEIGHT,
+    semanticWeight = DEFAULT_SEMANTIC_WEIGHT,
+  } = options;
+
+  const now = new Date();
+  const scored: { memory: RankableMemory; score: number; expl: ScoreExplanation }[] = [];
+
+  for (const m of memories) {
+    if (projectId && m.projectId !== projectId) continue;
+    const tagScore = tagMatchScore(m.tagsJson, tags);
+    if (tagScore === 0) continue;
+
+    const text = `${m.title} ${m.content}`;
+    const kw = keywordMatchScore(query, text);
+    const sem = m.semanticScore ?? 0;
+    const rec = recencyScore(m.createdAt, now, recencyBoostDays);
+
+    let score = keywordWeight * kw + semanticWeight * sem;
+    score *= rec;
+    score *= tagScore;
+    const pinnedBoostApplied = m.isPinned;
+    const favoriteBoostApplied = m.isFavorite;
+    if (m.isPinned) score *= pinnedBoost;
+    if (m.isFavorite) score *= favoriteBoost;
+    const confidenceFactor = m.confidence != null && m.confidence > 0 ? 0.5 + 0.5 * m.confidence : 1;
+    if (m.confidence != null && m.confidence > 0) score *= confidenceFactor;
+
+    if (score < 0) continue;
+
+    scored.push({
+      memory: m,
+      score,
+      expl: {
+        memoryId: m.id,
+        semantic: sem,
+        keyword: kw,
+        recency: rec,
+        tagScore,
+        pinnedBoost: pinnedBoostApplied,
+        favoriteBoost: favoriteBoostApplied,
+        confidenceFactor,
+        finalScore: score,
+      },
+    });
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  return {
+    ranked: scored.map((s) => s.memory),
+    explanations: scored.map((s) => s.expl),
+  };
 }

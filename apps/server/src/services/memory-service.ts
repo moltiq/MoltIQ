@@ -16,14 +16,58 @@ export interface CreateMemoryInput {
   confidence?: number;
 }
 
-export class MemoryService {
-  constructor(private vector: VectorAdapter) {}
+export interface MemoryServiceOptions {
+  embedBatchSize?: number;
+  dedupSimilarityThreshold?: number;
+  auditLogEnabled?: boolean;
+}
 
-  async create(input: CreateMemoryInput) {
+async function auditLog(
+  action: string,
+  resource: string,
+  resourceId: string,
+  projectId: string | null,
+  details?: string,
+  actor?: string
+): Promise<void> {
+  try {
+    await prisma.auditLog.create({
+      data: { action, resource, resourceId, projectId, details, actor },
+    });
+  } catch {
+    // ignore audit failures
+  }
+}
+
+export class MemoryService {
+  constructor(
+    private vector: VectorAdapter,
+    private options: MemoryServiceOptions = {}
+  ) {}
+
+  private get auditEnabled(): boolean {
+    return this.options.auditLogEnabled ?? false;
+  }
+
+  private get dedupThreshold(): number {
+    return this.options.dedupSimilarityThreshold ?? 0;
+  }
+
+  async create(input: CreateMemoryInput, actor?: string) {
     const title = redact(input.title);
     const content = redact(input.content);
     const source = input.source ? redact(input.source) : null;
     const tagsJson = input.tags?.length ? JSON.stringify(input.tags) : null;
+
+    const textToEmbed = `${title} ${content}`;
+
+    if (this.dedupThreshold > 0) {
+      const existing = await this.vector.query(textToEmbed, 1, { projectId: input.projectId });
+      if (existing.length > 0 && existing[0].score >= this.dedupThreshold) {
+        const dup = await prisma.memory.findUnique({ where: { id: existing[0].id } });
+        if (dup) return dup;
+      }
+    }
 
     const memory = await prisma.memory.create({
       data: {
@@ -40,7 +84,6 @@ export class MemoryService {
       },
     });
 
-    const textToEmbed = `${memory.title} ${memory.content}`;
     await this.vector.add(memory.id, textToEmbed, {
       projectId: memory.projectId,
       memoryId: memory.id,
@@ -55,10 +98,14 @@ export class MemoryService {
       },
     });
 
+    if (this.auditEnabled) {
+      await auditLog("create", "memory", memory.id, memory.projectId, JSON.stringify({ type: memory.type, title: memory.title }), actor);
+    }
+
     return memory;
   }
 
-  async update(id: string, data: Partial<CreateMemoryInput>) {
+  async update(id: string, data: Partial<CreateMemoryInput>, actor?: string) {
     const existing = await prisma.memory.findUnique({ where: { id } });
     if (!existing) return null;
 
@@ -105,13 +152,24 @@ export class MemoryService {
       });
     }
 
+    if (this.auditEnabled) {
+      await auditLog("update", "memory", memory.id, memory.projectId, undefined, actor);
+    }
+
     return memory;
   }
 
-  async delete(id: string) {
+  async delete(id: string, actor?: string) {
+    const existing = await prisma.memory.findUnique({ where: { id } });
+    if (!existing) return false;
+
     await this.vector.delete(id).catch(() => {});
     await prisma.memoryEmbedding.deleteMany({ where: { memoryId: id } });
     await prisma.memory.delete({ where: { id } });
+
+    if (this.auditEnabled) {
+      await auditLog("delete", "memory", id, existing.projectId, undefined, actor);
+    }
     return true;
   }
 

@@ -7,8 +7,6 @@ import type { RankableMemory } from "./ranking.js";
  */
 function mem(overrides: Partial<RankableMemory> & { id: string; projectId: string }): RankableMemory {
   return {
-    id: overrides.id,
-    projectId: overrides.projectId,
     type: "FACT",
     title: "T",
     content: "C",

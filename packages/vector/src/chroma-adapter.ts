@@ -9,8 +9,17 @@ export interface ChromaAdapterOptions {
   collection?: string;
 }
 
+// ChromaClient types can vary by chromadb version; use minimal interface to avoid type conflicts
+interface ChromaClientLike {
+  getOrCreateCollection(opts: { name: string; metadata?: Record<string, string> }): Promise<{
+    add(opts: { ids: string[]; embeddings: number[][]; metadatas?: Record<string, string | number | boolean>[] }): Promise<void>;
+    query(opts: { queryEmbeddings: number[][]; nResults: number; where?: Record<string, unknown> }): Promise<{ ids: string[][]; distances?: number[][]; metadatas?: Record<string, unknown>[][] }>;
+    delete(opts: { ids: string[] }): Promise<void>;
+  }>;
+}
+
 export class ChromaAdapter implements VectorAdapter {
-  private client: import("chromadb").ChromaClient | null = null;
+  private client: ChromaClientLike | null = null;
   private collectionName: string;
   private host: string;
   private port: number;
@@ -21,10 +30,12 @@ export class ChromaAdapter implements VectorAdapter {
     this.port = options.port ?? 8000;
   }
 
-  private async getClient(): Promise<import("chromadb").ChromaClient> {
+  private async getClient(): Promise<ChromaClientLike> {
     if (this.client) return this.client;
-    const { ChromaClient } = await import("chromadb");
-    this.client = new ChromaClient({ host: this.host, port: this.port });
+    const chroma = await import("chromadb");
+    const ChromaClient = (chroma as { ChromaClient?: new (opts: Record<string, unknown>) => ChromaClientLike }).ChromaClient;
+    if (!ChromaClient) throw new Error("ChromaClient not found in chromadb");
+    this.client = new ChromaClient({ host: this.host, port: this.port } as Record<string, unknown>);
     return this.client;
   }
 

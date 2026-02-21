@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 export { PrismaClient } from "@prisma/client";
-export type { Project, Session, Event, Memory, MemoryEmbedding, MemoryType } from "@prisma/client";
+export type { Project, Session, Event, Memory, MemoryEmbedding, AuditLog } from "@prisma/client";
+
+export type MemoryType = "FACT" | "DECISION" | "SNIPPET" | "TASK" | "SUMMARY";
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
 

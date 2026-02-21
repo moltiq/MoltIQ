@@ -32,18 +32,19 @@ let defaultEmbedder: Embedder | null = null;
 
 export function getEmbedder(): Embedder {
   if (defaultEmbedder) return defaultEmbedder;
+  let embedder: Embedder;
   if (process.env.OPENAI_API_KEY) {
     try {
-      // Lazy load to avoid requiring openai when not used
-      const { OpenAIEmbedder } = require("./embed-openai.js");
-      defaultEmbedder = new OpenAIEmbedder();
-      return defaultEmbedder;
+      const { OpenAIEmbedder } = require("./embed-openai.js") as { OpenAIEmbedder: new () => Embedder };
+      embedder = new OpenAIEmbedder();
     } catch {
-      // fall through to stub
+      embedder = new StubEmbedder();
     }
+  } else {
+    embedder = new StubEmbedder();
   }
-  defaultEmbedder = new StubEmbedder();
-  return defaultEmbedder;
+  defaultEmbedder = embedder;
+  return embedder;
 }
 
 export function setEmbedder(embedder: Embedder | null): void {
