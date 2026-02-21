@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+.git
+.env
+.env.*
+*.db
+*.db-journal
+packages/db/dev.db
+.cache
+dist
+**/dist
+*.log
+.DS_Store
+.idea
+.vscode
+*.md
+!README.md
