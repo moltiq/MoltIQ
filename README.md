@@ -218,9 +218,9 @@ curl -X POST http://localhost:37777/api/events \
   }'
 ```
 
-## Deploy (live API + Swagger)
+## Deploy
 
-To run the API in production and share the Swagger docs (e.g. on X): use the root **Dockerfile** and set `DATABASE_URL`, `CHROMA_OPTIONAL=true`, and `PORT` (if your host sets it). See **[DEPLOY.md](./DEPLOY.md)** for Railway, Render, Fly.io, and a “share on X” checklist.
+Use the root **Dockerfile**; set `DATABASE_URL`, `CHROMA_OPTIONAL`, and `PORT` as needed for your host.
 
 ## Tests
 

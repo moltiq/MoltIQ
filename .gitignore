@@ -25,3 +25,6 @@ Thumbs.db
 
 # Optional: uncomment if you use local settings for dev only
 # .moltiq/
+
+# Internal docs (deploy steps, etc.)
+DEPLOY.md
