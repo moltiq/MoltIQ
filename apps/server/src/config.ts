@@ -39,6 +39,8 @@ export interface Config {
   useLLMSessionSummary: boolean;
   /** Dedup: skip create if similar memory exists (similarity threshold 0..1, 0 = off). */
   dedupSimilarityThreshold: number;
+  /** Optional logo URL for Swagger UI (e.g. https://moltiq.xyz/logo.png). */
+  swaggerLogoUrl: string | null;
 }
 
 function loadConfig(): Config {
@@ -70,6 +72,7 @@ function loadConfig(): Config {
     useLLMExtraction: overrides.useLLMExtraction ?? process.env.USE_LLM_EXTRACTION !== "false",
     useLLMSessionSummary: overrides.useLLMSessionSummary ?? process.env.USE_LLM_SESSION_SUMMARY !== "false",
     dedupSimilarityThreshold: overrides.dedupSimilarityThreshold ?? Number(process.env.DEDUP_SIMILARITY_THRESHOLD ?? 0.92),
+    swaggerLogoUrl: overrides.swaggerLogoUrl ?? process.env.SWAGGER_LOGO_URL ?? "https://preview--cogito-memory-forge.lovable.app/assets/moltiq-logo-DzklEc2o.png",
   };
 }
 
