@@ -75,7 +75,7 @@ async function main() {
       servers: [{ url: `http://localhost:${config.port}` }],
     },
   });
-  await app.register(swaggerUi, { routePrefix: "/docs" });
+  await app.register(swaggerUi, { routePrefix: "/" });
 
   await app.register(healthRoutes);
   await app.register((instance) =>

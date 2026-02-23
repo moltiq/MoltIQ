@@ -130,10 +130,10 @@ Or add to Cursor/Claude MCP config:
 curl http://localhost:37777/health
 ```
 
-**API docs** (Swagger UI):
+**API docs** (Swagger UI at root):
 
 ```
-http://localhost:37777/docs
+http://localhost:37777/
 ```
 
 **Project CRUD:**
