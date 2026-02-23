@@ -1,5 +1,9 @@
 # MoltIQ
 
+<p align="center">
+  <img src="assets/hero.png" alt="MoltIQ - Long-term intelligence for AI agents. Store. Search. Recall." width="100%">
+</p>
+
 Local-first long-term intelligence and memory layer for AI agents. MoltIQ provides a REST API and an MCP server so agents can store, search, recall, and export memories with project scoping and hybrid ranking.
 
 **Status: MVP.** For gaps and a phased roadmap to production-ready and beyond, see [ROADMAP.md](./ROADMAP.md).
